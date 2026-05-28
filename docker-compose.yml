@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  hr-automation:
+    build: .
+    container_name: ai-hr-automation-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=4
+    volumes:
+      - ./google-service-account-credentials.json:/app/google-service-account-credentials.json:ro
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - hr-network
+
+networks:
+  hr-network:
+    driver: bridge

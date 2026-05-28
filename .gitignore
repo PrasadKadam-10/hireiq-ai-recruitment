@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# Keys/secrets
+*.env
+.env.*
+!env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
