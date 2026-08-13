@@ -1,20 +1,18 @@
 """
 LLM Provider - HireIQ
-ASI1 for reasoning + Groq for fast extraction
+Using ASI1 for ALL tasks (Groq backup)
 """
 
 from langchain_openai import ChatOpenAI
-from langchain_groq import ChatGroq
 from langchain_core.language_models import BaseChatModel
 from src.config import Config
+import logging
 
+logger = logging.getLogger(__name__)
 
-# ============================================================================
-# ASI1 LLM (Reasoning - Evaluation, Summary, Decision)
-# ============================================================================
 
 def get_asi1_llm(temperature: float = 0.3) -> BaseChatModel:
-    """ASI1 LLM for reasoning tasks"""
+    """ASI1 LLM"""
     return ChatOpenAI(
         model=Config.ASI1_MODEL,
         api_key=Config.ASI1_API_KEY,
@@ -24,39 +22,18 @@ def get_asi1_llm(temperature: float = 0.3) -> BaseChatModel:
     )
 
 
-# ============================================================================
-# GROQ LLM (Fast - Extraction, Parsing)
-# ============================================================================
-
-def get_groq_llm(temperature: float = 0.1) -> BaseChatModel:
-    """Groq LLM for fast extraction tasks"""
-    return ChatGroq(
-        model=Config.GROQ_MODEL,
-        api_key=Config.GROQ_API_KEY,
-        temperature=temperature,
-        max_tokens=1000
-    )
-
-
-# ============================================================================
-# TASK-SPECIFIC LLM FACTORIES
-# ============================================================================
-
+# ALL functions use ASI1 now
 def create_extraction_llm() -> BaseChatModel:
-    """Fast extraction → Groq"""
-    return get_groq_llm(temperature=Config.EXTRACTION_TEMP)
-
+    return get_asi1_llm(temperature=0.1)
 
 def create_job_skills_llm() -> BaseChatModel:
-    """Job skills extraction → Groq"""
-    return get_groq_llm(temperature=0.0)
-
+    return get_asi1_llm(temperature=0.0)
 
 def create_summary_llm() -> BaseChatModel:
-    """Summary generation → ASI1"""
-    return get_asi1_llm(temperature=Config.SUMMARY_TEMP)
-
+    return get_asi1_llm(temperature=0.5)
 
 def create_evaluation_llm() -> BaseChatModel:
-    """Candidate evaluation → ASI1"""
-    return get_asi1_llm(temperature=Config.EVALUATION_TEMP)
+    return get_asi1_llm(temperature=0.3)
+
+def get_groq_llm(temperature: float = 0.1) -> BaseChatModel:
+    return get_asi1_llm(temperature=temperature)

@@ -366,17 +366,23 @@ async def candidate_job_application_submit(
                 detail="Only PDF files accepted"
             )
 
-        # Save CV to temp file
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=".pdf"
-        ) as tmp:
-            shutil.copyfileobj(cv_file.file, tmp)
-            tmp_path = tmp.name
+       # Save CV to permanent location
+        upload_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "temp_cvs"
+        )
+        os.makedirs(upload_dir, exist_ok=True)
+        import uuid
+        tmp_path = os.path.join(upload_dir, f"{uuid.uuid4()}.pdf")
+        content = await cv_file.read()
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
 
         logger.info(f"📄 CV saved: {tmp_path}")
         logger.info(f"👤 Processing: {name} → Job: {job_id}")
-
+        
         # Get job from MongoDB
         job = await db.hr_job_posts.find_one({"_id": ObjectId(job_id)})
         if not job:
@@ -425,10 +431,14 @@ async def candidate_job_application_submit(
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        if tmp_path and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-            logger.info(f"🗑️ Temp file cleaned")
-
+        import threading
+        def cleanup():
+            import time
+            time.sleep(120)
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+                logger.info(f"🗑️ Temp file cleaned")
+        threading.Thread(target=cleanup, daemon=True).start()
 
 @app.get("/api/candidates")
 async def get_candidates():

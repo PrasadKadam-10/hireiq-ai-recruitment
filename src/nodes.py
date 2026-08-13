@@ -4,17 +4,19 @@ All node implementations for the HR automation workflow
 """
 
 import os
+import json
+import re
 import logging
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.output_parsers import StrOutputParser
 
 from src.data_models import (
-    AgentState, CandidateEvaluation,
-    JobSkills, SkillsMatch, PersonalData
+    AgentState,
+    JobSkills,
+    SkillsMatch,
 )
 from src.llm_provider import (
     create_extraction_llm,
@@ -35,27 +37,18 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 async def upload_cv_node(state: AgentState) -> dict:
-    """
-    Node 1: Handle CV file
-    Saves uploaded CV locally (no Google Cloud needed)
-    """
+    """Node 1: Handle CV file"""
     logger.info("📄 Node 1: Processing CV upload")
-
     try:
         cv_file_path = state.get("cv_file_path", "")
-
         if not cv_file_path or not Path(cv_file_path).exists():
             return {
                 "errors": state.get("errors", []) + ["CV file not found"],
                 "cv_link": ""
             }
-
-        # Use local path as CV link
         cv_link = f"file://{cv_file_path}"
         logger.info(f"✅ CV file ready: {cv_file_path}")
-
         return {"cv_link": cv_link}
-
     except Exception as e:
         logger.error(f"❌ CV upload failed: {e}")
         return {"errors": state.get("errors", []) + [str(e)]}
@@ -66,17 +59,15 @@ async def upload_cv_node(state: AgentState) -> dict:
 # ============================================================================
 
 async def extract_cv_data_node(state: AgentState) -> dict:
-    """
-    Node 2: Extract structured data from CV
-    Uses Groq (fast) + pdfplumber
-    """
+    """Node 2: Extract structured data from CV using Groq"""
     logger.info("🔍 Node 2: Extracting CV data")
-
     try:
+        logger.info(f"📄 CV file path: {state['cv_file_path']}")
         cv_text = extract_cv_data(state["cv_file_path"])
+        logger.info(f"📄 CV text length: {len(cv_text)}")
+        logger.info(f"📄 CV preview: {cv_text[:200]}")
 
         llm = create_extraction_llm()
-
         prompt = ChatPromptTemplate.from_template("""
 You are an expert CV parser. Extract information from this CV.
 
@@ -98,28 +89,15 @@ Respond with ONLY a valid JSON object, no other text:
     "technicalSkills": ["<skill1>", "<skill2>", "<skill3>"]
 }}
 """)
-
         chain = prompt | llm | StrOutputParser()
-        raw_response = await chain.ainvoke({
-            "cv_text": cv_text[:3000],
-        })
+        raw_response = await chain.ainvoke({"cv_text": cv_text[:3000]})
 
-        # Clean and parse JSON
-        import json
-        import re
         clean = re.sub(r'```json\s*', '', raw_response)
-        clean = re.sub(r'```\s*', '', clean)
-        clean = clean.strip()
-
+        clean = re.sub(r'```\s*', '', clean).strip()
         json_match = re.search(r'\{.*\}', clean, re.DOTALL)
-        if json_match:
-            extracted_data = json.loads(json_match.group())
-        else:
-            extracted_data = json.loads(clean)
-
+        extracted_data = json.loads(json_match.group() if json_match else clean)
         extracted_data["raw_text"] = cv_text
         logger.info(f"✅ CV extracted for: {extracted_data.get('fullName', 'Unknown')}")
-
         return {"extracted_cv_data": extracted_data}
 
     except Exception as e:
@@ -133,20 +111,16 @@ Respond with ONLY a valid JSON object, no other text:
             }
         }
 
+
 # ============================================================================
 # NODE 3: EXTRACT JOB SKILLS
 # ============================================================================
 
 async def extract_job_skills_node(state: AgentState) -> dict:
-    """
-    Node 3: Extract required skills from job description
-    Uses Groq (fast, deterministic)
-    """
+    """Node 3: Extract required skills from job description using Groq"""
     logger.info("💼 Node 3: Extracting job skills")
-
     try:
         llm = create_job_skills_llm()
-
         prompt = ChatPromptTemplate.from_template("""
 Extract all required skills from this job description.
 
@@ -159,25 +133,16 @@ Respond with ONLY a valid JSON object, no other text:
     "soft_skills": ["<skill1>", "<skill2>"]
 }}
 """)
-
         chain = prompt | llm | StrOutputParser()
         raw_response = await chain.ainvoke({
             "job_title": state["job_title"],
             "job_description": state["job_description"][:2000],
         })
 
-        import json
-        import re
         clean = re.sub(r'```json\s*', '', raw_response)
-        clean = re.sub(r'```\s*', '', clean)
-        clean = clean.strip()
-
+        clean = re.sub(r'```\s*', '', clean).strip()
         json_match = re.search(r'\{.*\}', clean, re.DOTALL)
-        if json_match:
-            job_skills = json.loads(json_match.group())
-        else:
-            job_skills = json.loads(clean)
-
+        job_skills = json.loads(json_match.group() if json_match else clean)
         logger.info(f"✅ Extracted {len(job_skills.get('tech_skills', []))} tech skills")
         return {"job_skills": job_skills}
 
@@ -188,21 +153,16 @@ Respond with ONLY a valid JSON object, no other text:
             "job_skills": {"tech_skills": [], "soft_skills": []}
         }
 
+
 # ============================================================================
 # NODE 4: GENERATE SUMMARY
 # ============================================================================
 
 async def generate_summary_node(state: AgentState) -> dict:
-    """
-    Node 4: Generate candidate summary
-    Uses ASI1 (better reasoning)
-    """
+    """Node 4: Generate candidate summary using ASI1"""
     logger.info("📝 Node 4: Generating candidate summary")
-
     try:
         llm = create_summary_llm()
-        parser = StrOutputParser()
-
         prompt = ChatPromptTemplate.from_template("""
 You are an expert HR recruiter. Write a professional 200-word summary of this candidate.
 
@@ -216,14 +176,12 @@ CANDIDATE NAME: {candidate_name}
 JOB TITLE: {job_title}
 CV DATA: {cv_text}
 """)
-
-        chain = prompt | llm | parser
+        chain = prompt | llm | StrOutputParser()
         summary = await chain.ainvoke({
             "candidate_name": state["candidate_name"],
             "job_title": state["job_title"],
             "cv_text": state["extracted_cv_data"].get("raw_text", "")[:2000]
         })
-
         logger.info("✅ Summary generated")
         return {"summary": summary}
 
@@ -240,16 +198,10 @@ CV DATA: {cv_text}
 # ============================================================================
 
 async def evaluate_candidate_node(state: AgentState) -> dict:
-    """
-    Node 5: Evaluate candidate with score 1-100
-    Uses ASI1 (best reasoning)
-    Anti-hallucination CoT prompting
-    """
+    """Node 5: Evaluate candidate with score 1-100 using ASI1"""
     logger.info("⭐ Node 5: Evaluating candidate")
-
     try:
         llm = create_evaluation_llm()
-
         prompt = ChatPromptTemplate.from_template("""
 You are an Expert Technical Recruiter. Evaluate this candidate objectively.
 
@@ -274,13 +226,12 @@ CV TEXT: {cv_text}
 Respond with ONLY a valid JSON object in this exact format, no other text:
 {{
     "score": <integer between 1 and 100>,
-    "reasoning": "<detailed reasoning>",
+    "reasoning": "<max 5 sentences explaining the decision>",
     "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
     "gaps": ["<gap 1>", "<gap 2>"],
     "decision": "<one line hiring decision>"
 }}
 """)
-
         chain = prompt | llm | StrOutputParser()
         raw_response = await chain.ainvoke({
             "candidate_name": state["candidate_name"],
@@ -290,30 +241,13 @@ Respond with ONLY a valid JSON object in this exact format, no other text:
         })
 
         logger.info(f"Raw evaluation response: {raw_response[:200]}")
-
-        # Clean and parse JSON
-        import json
-        import re
-
-        # Remove markdown code blocks if present
         clean = re.sub(r'```json\s*', '', raw_response)
-        clean = re.sub(r'```\s*', '', clean)
-        clean = clean.strip()
-
-        # Find JSON object
+        clean = re.sub(r'```\s*', '', clean).strip()
         json_match = re.search(r'\{.*\}', clean, re.DOTALL)
-        if json_match:
-            evaluation = json.loads(json_match.group())
-        else:
-            evaluation = json.loads(clean)
-
+        evaluation = json.loads(json_match.group() if json_match else clean)
         score = int(evaluation.get("score", 0))
         logger.info(f"✅ Evaluation complete - Score: {score}/100")
-
-        return {
-            "evaluation": evaluation,
-            "evaluation_score": score
-        }
+        return {"evaluation": evaluation, "evaluation_score": score}
 
     except Exception as e:
         logger.error(f"❌ Evaluation failed: {e}")
@@ -329,40 +263,28 @@ Respond with ONLY a valid JSON object in this exact format, no other text:
             "evaluation_score": 0
         }
 
+
 # ============================================================================
 # NODE 6: SKILLS MATCH
 # ============================================================================
 
 async def skills_match_node(state: AgentState) -> dict:
-    """
-    Node 6: Match candidate skills against job requirements
-    """
+    """Node 6: Match candidate skills against job requirements"""
     logger.info("🎯 Node 6: Matching skills")
-
     try:
         job_skills = state.get("job_skills", {})
         cv_data = state.get("extracted_cv_data", {})
-
-        # Get candidate skills
         candidate_skills = cv_data.get("technicalSkills", [])
         if not candidate_skills:
-            # Extract from raw text if structured skills not available
             raw_text = cv_data.get("raw_text", "")
             candidate_skills = extract_skills_from_text(raw_text)
 
-        # Create JobSkills object
         from src.data_models import JobSkills as JobSkillsModel
         job_skills_obj = JobSkillsModel(
             tech_skills=job_skills.get("tech_skills", []),
             soft_skills=job_skills.get("soft_skills", [])
         )
-
-        # Match skills
-        skills_match = map_job_to_candidate_skills(
-            job_skills_obj,
-            candidate_skills
-        )
-
+        skills_match = map_job_to_candidate_skills(job_skills_obj, candidate_skills)
         logger.info(f"✅ Skills matched")
         return {"skills_match": skills_match.model_dump()}
 
@@ -377,21 +299,18 @@ async def skills_match_node(state: AgentState) -> dict:
 def extract_skills_from_text(text: str) -> list[str]:
     """Extract common tech skills from raw text"""
     common_skills = [
-        "Python", "JavaScript", "TypeScript", "Java", "C++", "C#", "Go", "Rust",
+        "Python", "JavaScript", "TypeScript", "Java", "C++", "C#", "Go",
         "React", "Next.js", "Vue", "Angular", "Node.js", "FastAPI", "Django", "Flask",
         "Docker", "Kubernetes", "AWS", "GCP", "Azure", "CI/CD", "Git",
-        "MongoDB", "PostgreSQL", "MySQL", "Redis", "Qdrant", "Pinecone",
+        "MongoDB", "PostgreSQL", "MySQL", "Redis", "Qdrant",
         "LangChain", "LangGraph", "CrewAI", "RAG", "LLM", "Machine Learning",
         "TensorFlow", "PyTorch", "Pandas", "NumPy", "SQL"
     ]
-
     found_skills = []
     text_lower = text.lower()
-
     for skill in common_skills:
         if skill.lower() in text_lower:
             found_skills.append(skill)
-
     return found_skills
 
 
@@ -400,19 +319,14 @@ def extract_skills_from_text(text: str) -> list[str]:
 # ============================================================================
 
 async def web_research_node(state: AgentState) -> dict:
-    """
-    Node 7: Research candidate online using Exa
-    Our unique differentiator!
-    """
+    """Node 7: Research candidate online using Exa"""
     logger.info("🌐 Node 7: Researching candidate online")
-
     try:
         web_results = search_candidate_online(
             candidate_name=state["candidate_name"],
             candidate_email=state.get("candidate_email", ""),
             job_title=state["job_title"]
         )
-
         logger.info(f"✅ Web research: {web_results['summary']}")
         return {"web_research": web_results}
 
@@ -429,11 +343,8 @@ async def web_research_node(state: AgentState) -> dict:
 # ============================================================================
 
 def score_decision_node(state: AgentState) -> dict:
-    """
-    Node 8: Make hiring decision based on score
-    """
+    """Node 8: Make hiring decision based on score"""
     logger.info("🎯 Node 8: Making score decision")
-
     score = state.get("evaluation_score", 0)
 
     if score >= 75:
@@ -457,7 +368,6 @@ Decision: {tag}
 ─────────────────────────
 {state.get('summary', '')[:200]}
 """
-
     logger.info(f"✅ Decision: {tag}")
     return {
         "tag": tag,
@@ -471,15 +381,10 @@ Decision: {tag}
 # ============================================================================
 
 async def save_to_mongodb_node(state: AgentState) -> dict:
-    """
-    Node 9: Save results to MongoDB
-    """
+    """Node 9: Save results to MongoDB"""
     logger.info("💾 Node 9: Saving to MongoDB")
-
     try:
         from src.fastapi_api import db
-        from datetime import datetime
-
         result_doc = {
             "candidateName": state.get("candidate_name"),
             "candidateEmail": state.get("candidate_email"),
@@ -494,10 +399,8 @@ async def save_to_mongodb_node(state: AgentState) -> dict:
             "timestamp": datetime.now().isoformat(),
             "errors": state.get("errors", [])
         }
-
         await db.candidates.insert_one(result_doc)
         logger.info("✅ Results saved to MongoDB")
-
         return {}
 
     except Exception as e:
