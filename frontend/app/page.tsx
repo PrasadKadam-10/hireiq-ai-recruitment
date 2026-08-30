@@ -43,6 +43,8 @@ function Nav() {
         <span className="hiq-brand-name">HireIQ</span>
       </div>
 
+      {open && <button className="hiq-nav-scrim" aria-label="Close menu" onClick={() => setOpen(false)} />}
+
       <div className={`hiq-nav-links ${open ? 'open' : ''}`}>
         {links.map(l => (
           <Link key={l.href} href={l.href} className={`hiq-nav-link ${l.active ? 'active' : ''}`} onClick={() => setOpen(false)}>
@@ -55,7 +57,6 @@ function Nav() {
         </Link>
       </div>
 
-     
       <button className="hiq-nav-toggle" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
       </button>
@@ -222,18 +223,27 @@ export default function LandingPage() {
         .hiq-brand-mark{border-radius:10px;background:linear-gradient(150deg,var(--violet-400,#9c82df),var(--violet-700,#5030b3));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(100,64,221,0.30);flex-shrink:0;}
         .hiq-brand-mark svg{width:18px;height:18px;color:#fff;}
 
-        .hiq-navbar{display:flex;align-items:center;gap:10px;padding:16px 40px;border-bottom:1px solid var(--border-subtle,#e7e0f5);position:sticky;top:0;z-index:40;background:rgba(255,255,255,0.86);backdrop-filter:blur(14px);}
-        .hiq-brand{display:flex;align-items:center;gap:10px;margin-right:18px;}
+        /* FIX: backdrop-filter moved off .hiq-navbar itself and onto ::before.
+           A backdrop-filter/filter/transform on an ancestor creates a new
+           containing block for position:fixed descendants — that was pinning
+           the mobile drawer (.hiq-nav-links.open) inline next to the logo
+           instead of letting it slide in relative to the viewport. */
+        .hiq-navbar{display:flex;align-items:center;gap:10px;padding:16px 40px;border-bottom:1px solid var(--border-subtle,#e7e0f5);position:sticky;top:0;z-index:40;background:transparent;}
+        .hiq-navbar::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:-1;}
+        .hiq-brand{display:flex;align-items:center;gap:10px;margin-right:18px;position:relative;z-index:1;}
         .hiq-brand-name{font-weight:800;font-size:16px;letter-spacing:-0.02em;font-family:var(--font-display,'Sora',sans-serif);}
 
-        .hiq-nav-links{display:flex;align-items:center;gap:4px;}
+        .hiq-nav-links{display:flex;align-items:center;gap:4px;position:relative;z-index:1;}
         .hiq-nav-link{padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--text-secondary,#5b5568);text-decoration:none;transition:background .15s,color .15s;}
         .hiq-nav-link:hover{background:var(--violet-50,#f6f4fc);color:var(--text-primary,#1f1b2e);}
         .hiq-nav-link.active{background:var(--violet-100,#ede8fa);color:var(--violet-700,#5030b3);}
 
         .hiq-nav-only-mobile{display:none;}
-        .hiq-nav-toggle{display:none;margin-left:auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--border-subtle,#e7e0f5);background:#fff;align-items:center;justify-content:center;color:var(--text-primary,#1f1b2e);}
+        .hiq-nav-toggle{display:none;margin-left:auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--border-subtle,#e7e0f5);background:#fff;align-items:center;justify-content:center;color:var(--text-primary,#1f1b2e);position:relative;z-index:1;}
         .hiq-nav-toggle svg{width:19px;height:19px;}
+
+        /* dim/close-tap layer behind the mobile drawer */
+        .hiq-nav-scrim{display:none;}
 
         .hiq-nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
         .hiq-btn-primary{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(150deg,var(--violet-500,#7c5cf0),var(--violet-700,#5030b3));color:#fff;font-weight:700;font-size:13.5px;padding:10px 20px;border-radius:999px;border:none;text-decoration:none;box-shadow:0 8px 20px rgba(100,64,221,0.30);transition:transform .15s,box-shadow .15s;}
@@ -251,7 +261,7 @@ export default function LandingPage() {
         .hiq-hero-section{padding:56px 0 24px;}
         .hiq-hero-card{background:linear-gradient(180deg,var(--violet-50,#f6f4fc) 0%,#faf9fd 100%);border-radius:32px;padding:56px 56px 52px;display:grid;grid-template-columns:1.15fr 0.85fr;gap:48px;align-items:center;}
         .hiq-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:0.02em;color:var(--violet-700,#5030b3);background:#fff;border:1px solid var(--border-subtle,#e7e0f5);padding:7px 14px;border-radius:999px;margin-bottom:22px;}
-        .hiq-eyebrow svg{width:12px;height:12px;}
+        .hiq-eyebrow svg{width:12px;height:12px;flex-shrink:0;}
         .hiq-hero-card h1{font-size:44px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin:0 0 18px;font-family:var(--font-display,'Sora',sans-serif);}
         .hiq-hero-card h1 em{font-style:normal;color:var(--violet-600,#6440dd);}
         .hiq-hero-card p{font-size:16px;color:var(--text-secondary,#5b5568);max-width:480px;margin:0 0 30px;line-height:1.65;}
@@ -338,6 +348,7 @@ export default function LandingPage() {
           .hiq-hero-card h1{font-size:36px;}
         }
         @media (max-width:820px){
+          .hiq-nav-scrim{display:block;position:fixed;inset:0;background:rgba(20,14,38,0.32);z-index:38;border:none;padding:0;}
           .hiq-nav-links{position:fixed;top:0;right:0;height:100vh;width:min(78vw,320px);background:#fff;border-left:1px solid var(--border-subtle,#e7e0f5);box-shadow:0 20px 46px rgba(36,21,83,0.16);display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:84px 20px 24px;transform:translateX(100%);transition:transform .28s cubic-bezier(0.22,1,0.36,1);z-index:39;}
           .hiq-nav-links.open{transform:translateX(0);}
           .hiq-nav-link{padding:12px 14px;border-radius:12px;}
@@ -349,16 +360,19 @@ export default function LandingPage() {
         @media (max-width:640px){
           .hiq-navbar{padding:14px 18px;}
           .hiq-wrap{padding:0 18px;}
-          .hiq-hero-section{padding:32px 0 14px;}
-          .hiq-hero-card{padding:28px 20px;border-radius:22px;}
-          .hiq-hero-card h1{font-size:28px;line-height:1.18;}
+          .hiq-eyebrow{font-size:11px;padding:6px 11px;flex-wrap:wrap;}
+          .hiq-hero-section{padding:28px 0 12px;}
+          .hiq-hero-card{padding:26px 20px;border-radius:22px;gap:22px;}
+          .hiq-hero-card h1{font-size:27px;line-height:1.2;}
           .hiq-hero-card p{font-size:14.5px;}
           .hiq-hero-ctas{flex-direction:column;align-items:stretch;}
           .hiq-hero-ctas .hiq-btn-primary,.hiq-hero-ctas .hiq-btn-outline{justify-content:center;}
-          .hiq-hero-shapes{max-width:220px;}
-          .hiq-feature-card{padding:28px 20px;border-radius:22px;}
-          .hiq-feature-text h2{font-size:22px;}
-          .hiq-feature-shapes{max-width:200px;}
+          /* Shrunk + flattened so the decorative block reads as an accent,
+             not a large empty panel competing with the headline for space. */
+          .hiq-hero-shapes{max-width:150px;aspect-ratio:1/0.68;border-radius:22px;}
+          .hiq-feature-card{padding:26px 20px;border-radius:22px;gap:20px;}
+          .hiq-feature-text h2{font-size:21px;}
+          .hiq-feature-shapes{max-width:130px;aspect-ratio:1/0.68;border-radius:22px;}
           .hiq-section-head h2{font-size:22px;}
           .hiq-capability-grid{grid-template-columns:1fr;}
           .hiq-stack-section h2{font-size:22px;}
