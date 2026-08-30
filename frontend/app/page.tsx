@@ -49,21 +49,13 @@ function Nav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/dashboard" className="hiq-btn-ghost hiq-nav-only-mobile" onClick={() => setOpen(false)}>Log In</Link>
         <Link href="/submit" className="hiq-btn-primary hiq-nav-only-mobile" onClick={() => setOpen(false)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
           Analyze Resume
         </Link>
       </div>
 
-      <div className="hiq-nav-right">
-        <Link href="/dashboard" className="hiq-btn-ghost">Log In</Link>
-        <Link href="/submit" className="hiq-btn-primary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
-          Analyze Resume
-        </Link>
-      </div>
-
+     
       <button className="hiq-nav-toggle" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
       </button>
@@ -173,8 +165,8 @@ function Stack() {
       <h2>Built on a reasoning-first AI stack</h2>
       <div className="hiq-stack-grid">
         {items.map(({ title, desc, icon }) => (
-          <div key={title}>
-            <div className="hiq-stack-card-tile">
+          <div key={title} className="hiq-stack-card">
+            <div className="hiq-stack-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
             </div>
             <div className="hiq-stack-title">{title}</div>
@@ -300,11 +292,29 @@ export default function LandingPage() {
         .hiq-stack-section{padding:64px 0 20px;text-align:center;}
         .hiq-stack-section .kicker{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--violet-600,#6440dd);margin-bottom:8px;}
         .hiq-stack-section h2{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin:0 0 36px;font-family:var(--font-display,'Sora',sans-serif);}
-        .hiq-stack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;text-align:left;}
-        .hiq-stack-card-tile{background:linear-gradient(160deg,var(--ink-900,#1e1930),var(--ink-950,#171325));border-radius:22px;aspect-ratio:1/0.82;display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative;overflow:hidden;}
-        .hiq-stack-card-tile svg{width:34px;height:34px;color:#e6e1f7;position:relative;z-index:1;}
-        .hiq-stack-title{font-weight:700;font-size:14.5px;margin-bottom:5px;}
-        .hiq-stack-desc{font-size:12.5px;color:var(--text-tertiary,#7a7389);line-height:1.55;}
+        .hiq-stack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:left;}
+        .hiq-stack-card{
+          background:linear-gradient(160deg,var(--ink-900,#1e1930),var(--ink-950,#171325));
+          border:1px solid rgba(156,130,223,0.18);
+          border-radius:20px;padding:22px 20px 24px;
+          position:relative;overflow:hidden;
+          transition:transform .2s cubic-bezier(0.22,1,0.36,1), border-color .2s, box-shadow .2s;
+        }
+        .hiq-stack-card::after{
+          content:'';position:absolute;width:150px;height:150px;border-radius:50%;
+          background:radial-gradient(circle,rgba(124,92,240,0.22),transparent 70%);
+          top:-70px;right:-50px;pointer-events:none;
+        }
+        .hiq-stack-card:hover{transform:translateY(-3px);border-color:rgba(156,130,223,0.4);box-shadow:0 14px 30px rgba(36,21,83,0.30);}
+        .hiq-stack-icon{
+          width:40px;height:40px;border-radius:11px;
+          background:rgba(156,130,223,0.14);border:1px solid rgba(156,130,223,0.22);
+          display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+          position:relative;z-index:1;
+        }
+        .hiq-stack-icon svg{width:19px;height:19px;color:#c9bdf0;}
+        .hiq-stack-title{font-weight:700;font-size:14.5px;margin-bottom:6px;color:#fff;position:relative;z-index:1;}
+        .hiq-stack-desc{font-size:12.5px;color:#a89fc9;line-height:1.6;position:relative;z-index:1;}
 
         .hiq-cta-section{padding:60px 0 80px;}
         .hiq-cta-card{background:linear-gradient(150deg,var(--violet-700,#5030b3),var(--violet-900,#241553));border-radius:32px;padding:52px 40px;text-align:center;color:#fff;position:relative;overflow:hidden;}
@@ -353,7 +363,7 @@ export default function LandingPage() {
           .hiq-capability-grid{grid-template-columns:1fr;}
           .hiq-stack-section h2{font-size:22px;}
           .hiq-stack-grid{grid-template-columns:1fr 1fr;gap:12px;}
-          .hiq-stack-card-tile{aspect-ratio:1/0.9;}
+          .hiq-stack-card{padding:18px 16px 20px;}
           .hiq-stack-title{font-size:13px;}
           .hiq-stack-desc{font-size:11.5px;}
           .hiq-cta-card{padding:36px 22px;border-radius:22px;}
