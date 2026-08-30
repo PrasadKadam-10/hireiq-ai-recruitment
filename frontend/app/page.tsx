@@ -87,7 +87,10 @@ function Hero() {
             </a>
           </div>
         </div>
-        <ShapeFrame className="hiq-hero-shapes" />
+        <div>
+          <ShapeFrame className="hiq-hero-shapes" />
+          <div className="hiq-shape-caption">Multi-agent pipeline</div>
+        </div>
       </div>
     </section>
   );
@@ -246,9 +249,9 @@ export default function LandingPage() {
         .hiq-nav-scrim{display:none;}
 
         .hiq-nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-        .hiq-btn-primary{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(150deg,var(--violet-500,#7c5cf0),var(--violet-700,#5030b3));color:#fff;font-weight:700;font-size:13.5px;padding:10px 20px;border-radius:999px;border:none;text-decoration:none;box-shadow:0 8px 20px rgba(100,64,221,0.30);transition:transform .15s,box-shadow .15s;}
+        .hiq-btn-primary{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(150deg,var(--violet-500,#7c5cf0),var(--violet-700,#5030b3));color:#fff;font-weight:700;font-size:13.5px;padding:10px 20px;border-radius:999px;border:none;text-decoration:none;box-shadow:0 8px 20px rgba(100,64,221,0.30);transition:transform .15s,box-shadow .15s;}
         .hiq-btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(100,64,221,0.4);}
-        .hiq-btn-primary svg{width:14px;height:14px;}
+        .hiq-btn-primary svg{width:15px;height:15px;flex-shrink:0;}
         .hiq-btn-ghost{font-size:13.5px;font-weight:700;color:var(--text-secondary,#5b5568);padding:10px 14px;border-radius:999px;text-decoration:none;transition:background .15s;}
         .hiq-btn-ghost:hover{background:var(--violet-50,#f6f4fc);color:var(--text-primary,#1f1b2e);}
 
@@ -259,7 +262,8 @@ export default function LandingPage() {
         .hiq-shape-circle{border-radius:50%;}
 
         .hiq-hero-section{padding:56px 0 24px;}
-        .hiq-hero-card{background:linear-gradient(180deg,var(--violet-50,#f6f4fc) 0%,#faf9fd 100%);border-radius:32px;padding:56px 56px 52px;display:grid;grid-template-columns:1.15fr 0.85fr;gap:48px;align-items:center;}
+        .hiq-hero-card{background:linear-gradient(180deg,var(--violet-50,#f6f4fc) 0%,#faf9fd 100%);border:1px solid var(--border-subtle,#e7e0f5);border-radius:32px;padding:56px 56px 52px;display:grid;grid-template-columns:1.15fr 0.85fr;gap:48px;align-items:center;}
+        .hiq-shape-caption{display:none;text-align:center;font-size:11px;font-weight:600;color:var(--text-tertiary,#7a7389);margin-top:10px;letter-spacing:0.02em;}
         .hiq-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:0.02em;color:var(--violet-700,#5030b3);background:#fff;border:1px solid var(--border-subtle,#e7e0f5);padding:7px 14px;border-radius:999px;margin-bottom:22px;}
         .hiq-eyebrow svg{width:12px;height:12px;flex-shrink:0;}
         .hiq-hero-card h1{font-size:44px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin:0 0 18px;font-family:var(--font-display,'Sora',sans-serif);}
@@ -361,8 +365,9 @@ export default function LandingPage() {
           .hiq-navbar{padding:14px 18px;}
           .hiq-wrap{padding:0 18px;}
           .hiq-eyebrow{font-size:11px;padding:6px 11px;flex-wrap:wrap;}
-          .hiq-hero-section{padding:28px 0 12px;}
+          .hiq-hero-section{padding:16px 0 8px;}
           .hiq-hero-card{padding:26px 20px;border-radius:22px;gap:22px;}
+          .hiq-shape-caption{display:block;}
           .hiq-hero-card h1{font-size:27px;line-height:1.2;}
           .hiq-hero-card p{font-size:14.5px;}
           .hiq-hero-ctas{flex-direction:column;align-items:stretch;}
