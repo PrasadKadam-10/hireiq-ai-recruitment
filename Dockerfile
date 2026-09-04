@@ -13,8 +13,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
-RUN uv sync --system --no-cache
+# Install dependencies into .venv
+RUN uv sync --no-cache
 
 # Copy application
 COPY . .
@@ -30,4 +30,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "src.fastapi_api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD [".venv/bin/uvicorn", "src.fastapi_api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
