@@ -136,17 +136,17 @@ Next.js frontend with:
 
 ## Why HireIQ Stands Out
 
-| Feature | HireIQ | Typical Projects |
+| Feature | HireIQ | 
 |---|---|---|
-| LangGraph 9-Node Pipeline | ✅ Implemented | ❌ |
-| Anti-Hallucination CoT Prompting | ✅ Implemented | ❌ |
-| Real PDF Text Extraction | ✅ pdfplumber | ❌ |
-| ASI1 (Fetch.ai) Integration | ✅ GSSoC exclusive | ❌ |
-| Web Intelligence (Exa) | ✅ GitHub + LinkedIn | ❌ |
-| Semantic Skills Matching | ✅ Strong/Partial/Missing | Rare |
-| MongoDB Persistence | ✅ Full candidate history | Some |
-| Docker Ready | ✅ docker-compose | Some |
-| 100% Free Stack | ✅ No paid APIs required | Rare |
+| LangGraph 9-Node Pipeline | ✅ Implemented 
+| Anti-Hallucination CoT Prompting | ✅ Implemented 
+| Real PDF Text Extraction | ✅ pdfplumber 
+| ASI1 (Fetch.ai) Integration | ✅ GSSoC exclusive 
+| Web Intelligence (Exa) | ✅ GitHub + LinkedIn 
+| Semantic Skills Matching | ✅ Strong/Partial/Missing 
+| MongoDB Persistence | ✅ Full candidate history 
+| Docker Ready | ✅ docker-compose |
+| 100% Free Stack | ✅ No paid APIs required |
 
 ---
 
