@@ -6,11 +6,11 @@
 
 <br>
 
-<img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python">
+<img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python">
 <img src="https://img.shields.io/badge/LangGraph-Agentic%20AI-blueviolet">
 <img src="https://img.shields.io/badge/LangChain-Orchestration-blue">
 <img src="https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi">
-<img src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs">
+<img src="https://img.shields.io/badge/Next.js-16.2-black?logo=nextdotjs">
 <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript">
 <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?logo=tailwindcss">
 <img src="https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb">
@@ -35,10 +35,11 @@ HireIQ automates resume screening using a **9-node LangGraph pipeline** that pro
 
 The system **only evaluates what is explicitly present** in the uploaded resume — it does not infer or hallucinate candidate qualifications. Each evaluation node uses Chain-of-Thought (CoT) prompting with strict grounding instructions.
 
+```
 PDF Upload → Text Extraction → CV Parsing → JD Skill Extraction
 → AI Summary → Candidate Evaluation → Skills Matching
 → Web Research → Score Decision → MongoDB Storage
-
+```
 
 **Real outputs include:**
 - AI match score (1–100) based on CV vs JD comparison
@@ -51,23 +52,24 @@ PDF Upload → Text Extraction → CV Parsing → JD Skill Extraction
 
 ## System Architecture
 
+```
 User (Next.js Frontend)
-↓
+        ↓
 FastAPI Backend (Python)
-↓
+        ↓
 LangGraph 9-Node Pipeline
 ├── Node 1: CV Upload Handler
-├── Node 2: PDF Text Extraction (pdfplumber)
-├── Node 3: JD Skills Extraction (ASI1)
+├── Node 2: PDF Text Extraction (pdfplumber → Groq for structured extraction)
+├── Node 3: JD Skills Extraction (Groq)
 ├── Node 4: Candidate Summary (ASI1)
 ├── Node 5: AI Evaluation & Scoring (ASI1)
 ├── Node 6: Semantic Skills Matching
 ├── Node 7: Web Intelligence (Exa API)
 ├── Node 8: Score Decision & Routing
 └── Node 9: MongoDB Persistence
-↓
+        ↓
 Results → Next.js HR Dashboard
-
+```
 
 ---
 
@@ -76,15 +78,18 @@ Results → Next.js HR Dashboard
 | Category | Technology | Purpose |
 |---|---|---|
 | **Agent Framework** | LangGraph + LangChain | 9-node pipeline orchestration |
-| **LLM Provider** | ASI1 (Fetch.ai) | All reasoning, evaluation, summary |
+| **LLM Provider (evaluation)** | ASI1 (Fetch.ai) | Candidate evaluation & scoring, summary generation |
+| **LLM Provider (extraction)** | Groq — Llama 3.3-70B | Fast CV data extraction & JD skills extraction |
 | **Backend** | FastAPI + Python | REST API + file handling |
-| **Frontend** | Next.js 16 + TypeScript + TailwindCSS | HR Dashboard |
+| **Frontend** | Next.js 16.2 + TypeScript + TailwindCSS | HR Dashboard |
 | **Web Intelligence** | Exa AI | GitHub + LinkedIn candidate research |
 | **Vector Database** | Qdrant Cloud | Candidate embedding storage |
 | **Database** | MongoDB | Candidate + job persistence |
 | **PDF Processing** | pdfplumber | Resume text extraction |
-| **Deployment** | Docker + Docker Compose | Containerized deployment |
+| **Deployment** | Docker | Containerized backend |
 | **Package Manager** | uv | Fast Python dependency management |
+
+**Why two LLMs?** Groq (Llama 3.3-70B) handles the structured, latency-sensitive extraction steps — parsing the CV and pulling JD skills — where speed matters more than deep reasoning. ASI1 handles the steps that need judgment — writing the candidate summary and scoring/evaluating the match.
 
 ---
 
@@ -92,11 +97,12 @@ Results → Next.js HR Dashboard
 
 HireIQ uses **Chain-of-Thought (CoT) prompting** with strict grounding rules across all evaluation nodes:
 
+```
 GROUNDING: Use ONLY information explicitly stated in the CV
 HONESTY: Mark skills as "Missing" if not mentioned
 NO GUESSING: Never infer experience not stated
 REASONING: Step-by-step analysis before scoring
-
+```
 
 This means:
 - A candidate missing FastAPI will always be marked as "Missing FastAPI" — not "likely knows FastAPI"
@@ -108,10 +114,13 @@ This means:
 ## Core Features
 
 ### 9-Node LangGraph Pipeline
-Each node is a specialized agent with retry policies, error handling, and structured JSON outputs.
+Each node is a specialized agent; the `evaluate` node runs with a retry policy (max 2 attempts) and all nodes return structured state updates.
 
 ### PDF Resume Processing
 Uses `pdfplumber` for reliable text extraction from standard Word-to-PDF resumes. Text is passed directly to LLM nodes — no OCR or image processing.
+
+### Fast Resume & JD Extraction
+Groq (Llama 3.3-70B) handles CV data extraction and job-description skills extraction — chosen for speed on structured, low-ambiguity text parsing.
 
 ### AI Candidate Evaluation
 ASI1 (Fetch.ai) evaluates candidates against the job description using CoT reasoning. Output includes score, reasoning, strengths, gaps, and a one-line hiring decision.
@@ -127,82 +136,91 @@ Real-time search for candidate's GitHub profiles, LinkedIn presence, and portfol
 
 ### HR Dashboard
 Next.js frontend with:
-- Overview with live stats (jobs, candidates, avg score, strong fits)
+- Marketing/landing page (`app/page.tsx`) and a separate dashboard section (`app/dashboard/`)
 - Candidate list with score gauges and filter tabs
 - Detailed candidate report with skills snapshot
 - Job creation and CV submission flow
+- Shared UI components (`components/ui/`) and layout shell (`components/layout/`)
 
 ---
 
 ## Why HireIQ Stands Out
 
-| Feature | HireIQ | 
-|---|---|---|
-| LangGraph 9-Node Pipeline | ✅ Implemented 
-| Anti-Hallucination CoT Prompting | ✅ Implemented 
-| Real PDF Text Extraction | ✅ pdfplumber 
-| ASI1 (Fetch.ai) Integration | ✅ GSSoC exclusive 
-| Web Intelligence (Exa) | ✅ GitHub + LinkedIn 
-| Semantic Skills Matching | ✅ Strong/Partial/Missing 
-| MongoDB Persistence | ✅ Full candidate history 
-| Docker Ready | ✅ docker-compose |
-| 100% Free Stack | ✅ No paid APIs required |
+| Feature | HireIQ |
+|---|---|
+| LangGraph 9-Node Pipeline | ✅ Implemented |
+| Anti-Hallucination CoT Prompting | ✅ Implemented |
+| Real PDF Text Extraction | ✅ pdfplumber |
+| ASI1 (Fetch.ai) Integration | ✅ GSSoC exclusive |
+| Web Intelligence (Exa) | ✅ GitHub + LinkedIn |
+| Semantic Skills Matching | ✅ Strong/Partial/Missing |
+| MongoDB Persistence | ✅ Full candidate history |
+| Docker Ready | ✅ Backend Dockerfile |
+| No Paid APIs Required | ✅ Free tiers for every service |
 
 ---
 
 ## Project Structure
 
-hireiq/
+```
+hireiq-ai-recruitment/
 │
 ├── src/
-│ ├── fastapi_api.py # FastAPI backend + all endpoints
-│ ├── hr_automation.py # LangGraph workflow definition
-│ ├── nodes.py # 9 LangGraph node implementations
-│ ├── llm_provider.py # ASI1 LLM factory functions
-│ ├── config.py # Environment configuration
-│ ├── data_models.py # Pydantic models + AgentState
-│ ├── data_extraction.py # PDF text extraction (pdfplumber)
-│ ├── skills_match.py # Skills matching logic
-│ └── exa_client.py # Exa web search integration
+│   ├── fastapi_api.py       # FastAPI backend + all endpoints
+│   ├── hr_automation.py     # LangGraph workflow definition
+│   ├── nodes.py             # 9 LangGraph node implementations
+│   ├── llm_provider.py      # ASI1 LLM factory functions
+│   ├── config.py            # Environment configuration
+│   ├── data_models.py       # Pydantic models + AgentState
+│   ├── data_extraction.py   # PDF text extraction (pdfplumber)
+│   ├── skills_match.py      # Skills matching logic
+│   ├── exa_client.py        # Exa web search integration
+│   ├── google_cloud.py      # Optional GCS upload helper (unused by default flow)
+│   ├── google_services.py   # Optional Gmail/Sheets helper (unused by default flow)
+│   └── utils/
 │
 ├── frontend/
-│ ├── app/
-│ │ ├── page.tsx # Overview dashboard
-│ │ ├── jobs/ # Job management
-│ │ ├── submit/ # CV submission + results
-│ │ └── candidates/ # Candidate list + detail
-│ └── lib/
-│ ├── api.ts # FastAPI client
-│ └── types.ts # TypeScript interfaces
+│   ├── app/
+│   │   ├── page.tsx             # Landing page
+│   │   ├── dashboard/           # Overview dashboard
+│   │   ├── jobs/                # Job management
+│   │   ├── submit/              # CV submission + results
+│   │   └── candidates/          # Candidate list + detail
+│   ├── components/
+│   │   ├── ui/                  # ScoreGauge, StatCard, SkillChips, etc.
+│   │   └── layout/               # AppShell, Sidebar, TopBar
+│   └── lib/
+│       ├── api.ts            # FastAPI client
+│       └── types.ts          # TypeScript interfaces
 │
-├── temp_cvs/ # Uploaded PDF storage
-├── docker-compose.yml
+├── temp_cvs/              # Uploaded PDF storage (created at runtime, not tracked)
+├── test_cv.py
+├── docker-compose.yml     # Currently configured for an older OpenAI/Google-Sheets setup — update env vars before use
 ├── Dockerfile
 ├── pyproject.toml
 ├── uv.lock
-├── CLAUDE.md # AI coding assistant instructions
-├── MEMORY.md # Project memory and decisions
+├── env.example            # Out of date — see "Configure" below for the vars actually used
 └── README.md
-
+```
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.12+
 - Node.js 18+
-- MongoDB running locally
+- MongoDB running locally (or a connection string to one)
 - Free API keys (all zero cost)
 
 ### Get Free API Keys
 
-| Service | Link | Cost |
-|---|---|---|
-| ASI1 (Fetch.ai) | [asi1.ai](https://asi1.ai) | ✅ Free (GSSoC 2026) |
-| Exa | [exa.ai](https://exa.ai) | ✅ Free tier |
-| Qdrant | [cloud.qdrant.io](https://cloud.qdrant.io) | ✅ Free tier |
-| Groq | [console.groq.com](https://console.groq.com) | ✅ Free tier |
+| Service | Link | Cost | Used for |
+|---|---|---|---|
+| ASI1 (Fetch.ai) | [asi1.ai](https://asi1.ai) | ✅ Free (GSSoC 2026) | Evaluation, scoring, summary |
+| Groq | [console.groq.com](https://console.groq.com) | ✅ Free tier | CV & JD extraction (Llama 3.3-70B) |
+| Exa | [exa.ai](https://exa.ai) | ✅ Free tier | GitHub/LinkedIn web research |
+| Qdrant | [cloud.qdrant.io](https://cloud.qdrant.io) | ✅ Free tier | Candidate embeddings |
 
 ### 1. Clone
 
@@ -213,22 +231,32 @@ cd hireiq-ai-recruitment
 
 ### 2. Configure
 
+The checked-in `env.example` predates the current setup and references OpenAI/Anthropic/Gemini/Ollama options that this project doesn't use — ignore it and create your `.env` with these variables instead:
+
 ```bash
-cp env.example .env
-# Add your API keys to .env
-```
-
-Required `.env` values:
-
+# ASI1 (Fetch.ai) — evaluation & summary nodes.
+# ASI1's API is OpenAI-compatible, so the client library needs an
+# OPENAI_API_KEY/OPENAI_BASE_URL pair — this is still ASI1, not real OpenAI.
 ASI1_API_KEY=your_asi1_key
-OPENAI_API_KEY=your_asi1_key # same key, OpenAI-compatible
+OPENAI_API_KEY=your_asi1_key
 OPENAI_BASE_URL=https://api.asi1.ai/v1
 OPENAI_MODEL_NAME=asi1-mini
+
+# Groq (Llama 3.3-70B) — CV/JD extraction nodes
+GROQ_API_KEY=your_groq_key
+
+# Exa — web intelligence (GitHub/LinkedIn discovery)
 EXA_API_KEY=your_exa_key
+
+# Qdrant — candidate embedding storage
 QDRANT_URL=your_qdrant_cluster_url
 QDRANT_API_KEY=your_qdrant_key
-MONGODB_URL=mongodb://localhost:27017
 
+# MongoDB — candidate/job persistence
+MONGODB_URL=mongodb://localhost:27017
+```
+
+No OpenAI, Anthropic, Gemini, or Ollama account is needed anywhere in this project.
 
 ### 3. Backend
 
@@ -250,11 +278,13 @@ npm run dev
 
 Dashboard: `http://localhost:3000`
 
-### 5. Docker
+### 5. Docker (backend only)
 
 ```bash
 docker-compose up -d
 ```
+
+`docker-compose.yml` currently injects `OPENAI_API_KEY` and `GOOGLE_SHEET_ID` and expects a Google service-account file — update it to pass the ASI1/Exa/Qdrant/Mongo variables above (and add a MongoDB service, or point `MONGODB_URL` at an external instance) before relying on it for a full stack.
 
 ---
 
@@ -262,9 +292,13 @@ docker-compose up -d
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/` | API root / basic info |
+| `GET` | `/health` | Health check (used by Docker healthcheck) |
+| `GET` | `/api/config` | Current provider/config summary |
 | `POST` | `/api/jobs` | Create job posting |
 | `GET` | `/api/jobs` | List all jobs |
 | `GET` | `/api/jobs/{id}` | Get single job |
+| `DELETE` | `/api/jobs/{id}` | Delete a job posting |
 | `POST` | `/api/candidate-application-submit` | Submit CV + trigger pipeline |
 | `GET` | `/api/candidates` | List all evaluated candidates |
 | `GET` | `/api/candidates/{id}` | Get candidate report |
@@ -279,6 +313,7 @@ docker-compose up -d
 - Qdrant free tier clusters may be suspended after inactivity — recreate cluster if needed.
 - ASI1 responses can be slow (5–15 seconds per evaluation).
 - Score reflects CV content only — not verified work experience.
+- `env.example` and `docker-compose.yml` reflect an earlier architecture (OpenAI/Anthropic/Gemini/Ollama, Google Sheets) and need updating to match `config.py` — use the "Configure" section above instead.
 
 ---
 
@@ -311,7 +346,7 @@ This project demonstrates:
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+No `LICENSE` file is currently included in this repository. Add one (e.g. MIT) before claiming a license in this README.
 
 ---
 
