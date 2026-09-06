@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1366" height="768" alt="Screenshot (150)" src="https://github.com/user-attachments/assets/9ff8a4ec-25bd-42c4-abe5-1ff29ebaf0b4" /><div align="center">
 
 # HireIQ — AI Recruitment Intelligence Agent
 
@@ -316,7 +316,14 @@ docker-compose up -d
 - `env.example` and `docker-compose.yml` reflect an earlier architecture (OpenAI/Anthropic/Gemini/Ollama, Google Sheets) and need updating to match `config.py` — use the "Configure" section above instead.
 
 ---
-
+![Dashboard](Screenshot (150).png)
+![-](Screenshot (151).png)
+![-](Screenshot (153).png)
+![-](Screenshot (154).png)
+![-](Screenshot (155).png)
+![-](Screenshot (156).png)
+---
+---
 ## GSSoC 2026 Contribution
 
 This project is built as a contribution to the **Fetch.ai Innovation Lab** under GSSoC 2026.
